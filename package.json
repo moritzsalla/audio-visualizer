@@ -1,0 +1,22 @@
+{
+  "name": "perspective-system-3d",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "liveserver": "live-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moritzsalla/perspective-system-3d.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/moritzsalla/perspective-system-3d/issues"
+  },
+  "homepage": "https://github.com/moritzsalla/perspective-system-3d#readme",
+  "devDependencies": {
+    "auto-reload": "^0.1.0"
+  }
+}
