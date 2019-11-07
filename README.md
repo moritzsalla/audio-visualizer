@@ -2,4 +2,6 @@
 
 This draws a death star on a 2D canvas and uses maximilian to dynamically manipulate its shape
 
-![Image](images/screenshot.png)
+![Image](images/screenshot-1.png)
+
+![Image](images/screenshot-2.png)
