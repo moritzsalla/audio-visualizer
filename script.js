@@ -1,186 +1,133 @@
-var fov = 240;
+const playButton = document.querySelector(".button-wrapper")
+let maxi = maximilian();
+let maxiEngine = new maxi.maxiAudio();
+let osc1 = new maxi.maxiOsc();
+let osc2 = new maxi.maxiOsc();
+let osc3 = new maxi.maxiOsc();
+let drawOutput = 0;
+let audioOut;
 
-var canvas = document.querySelector("canvas");
-var width = window.innerWidth;
-var height = window.innerHeight;
-var context = canvas.getContext("2d");
-canvas.setAttribute("width", width);
-canvas.setAttribute("height", height);
-canvas.addEventListener('mousemove', getMouse, false);
-var mouseX = 0;
-var mouseY = 0;
+let playAudio = () => {
+  playButton.removeEventListener("click", playAudio)
+  playButton.classList.add("hide")
+  maxiEngine.init();
 
-var point = [];
-var points = [];
-var point3d = [];
-var angleX = 0;
-var angleY = 0;
-var HALF_WIDTH = width / 2;
-var HALF_HEIGHT = height / 2;
-
-var x3d = 0;
-var y3d = 0;
-var z3d = 0;
-
-var lastScale = 0;
-var lastx2d = 0;
-var lasty2d = 0;
-
-// The below code creates a sphere of points
-var dim = 50; // This is the number of rings
-// Each ring has as many points as there are rings
-// This is the spacing for each ring
-var spacing = ((Math.PI * 2) / dim);
-
-// This is the total number of points
-var numPoints = dim * dim;
-
-// This is how big the sphere is.
-var size = 150;
-
-// Now we build the sphere
-for (var i = 0; i < dim; i++) {
-
-  // Calculate the depth spacing
-
-  // To calculate the depth spacing, we divide our spacing in half
-  // This is because otherwise, the cosine / sine waves will
-  // oscillate positively and negatively
-  // We only need the positive bit
-
-  var z = size * Math.cos(spacing / 2 * i);
-
-  // Calculate the size of the current ring
-  var s = size * Math.sin(spacing / 2 * i);
-
-  // For each ring..
-
-  for (var j = 0; j < dim; j++) {
-
-    // ...create the next point in the circle at the current size s, at the current depth z
-
-    var point = [Math.cos(spacing * j) * s, Math.sin(spacing * j) * s, z];
-
-    // Add the point to the geometry.
-
-    points.push(point);
-
+  maxiEngine.play = () => {
+    audioOut = ((osc1.sinewave(120) * 2) * osc3.sinewave(0.5)) * osc2.sinewave(0.2)
+    return audioOut
   }
-}
 
-//
-console.log(points.length);
+  // CANVAS -------------------------------------
 
-function draw() {
+  let fov = 500;
+  let canvas = document.querySelector("canvas");
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  let context = canvas.getContext("2d");
 
-  context.fillStyle = "rgb(0,0,0)";
-  context.fillRect(0, 0, width, height);
+  canvas.setAttribute("width", width);
+  canvas.setAttribute("height", height);
 
-  angleX = ((mouseX / width) - 0.5) / 4;
-  angleY = ((mouseY / height) - 0.5) / 4;
+  let point = [];
+  let points = [];
+  let point3d = [];
+  let angleX = 0;
+  let angleY = 0;
+  let HALF_WIDTH = width / 2;
+  let HALF_HEIGHT = height / 2;
+  let x3d = 0;
+  let y3d = 0;
+  let z3d = 0;
+  let lastScale = 0;
+  let lastx2d = 0;
+  let lasty2d = 0;
+  let dim = 50;
+  let spacing = ((Math.PI * 2) / dim);
+  let numPoints = dim * dim;
+  let size = 250;
 
-  // Here we run through each point and work out where it should be drawn
+  for (let i = 0; i < dim; i++) {
+    let z = size * Math.cos(spacing / 2 * i);
+    let s = size * Math.sin(spacing / 2 * i);
 
-  for (var i = 0; i < numPoints; i++) {
-    point3d = points[i];
-    z3d = point3d[2];
+    for (let j = 0; j < dim; j++) {
+      let point = [Math.cos(spacing * j) * s, Math.sin(spacing * j) * s, z];
+      points.push(point);
+    }
+  }
 
-    // This is the speed of the z
-    // It moves the points forwards in space
-    // We don't need it for the pure rotate
-    // z3d -= 1.0;
+  function draw() {
+    // fetch audio in
+    let audioIn = audioOut * 10 || 0
 
-    // Check that the points aren't disappearing into space and if so push them back
-    // This also stops them stretching
-    // When they get too close
-    if (z3d < -fov) z3d += 0;
+    if (audioIn === null || audioIn === undefined) {
+      audioIn = 0
+    }
 
-    point3d[2] = z3d;
+    fov = 500 + audioIn
+    console.log(audioIn)
 
-    // Calculate the rotation
+    context.fillStyle = "rgb(0,0,0)";
+    context.fillRect(0, 0, width, height);
+    angleX = 0.0001 + (audioIn * 0.00055);
+    angleY = 0.0001 + (audioIn * 0.00055);
 
-    rotateX(point3d, angleX);
-    rotateY(point3d, angleY);
+    for (let i = 0; i < numPoints; i++) {
+      point3d = points[i];
+      z3d = point3d[2];
 
-    // Get the point in position
+      if (z3d < -fov) z3d += 0;
+      point3d[2] = z3d;
+      rotateX(point3d, angleX);
+      rotateY(point3d, angleY);
+      x3d = point3d[0];
+      y3d = point3d[1];
+      z3d = point3d[2];
 
-    x3d = point3d[0];
-    y3d = point3d[1];
-    z3d = point3d[2];
-    // Convert the Z value to a scale factor
-    // This will give the appearance of depth
-    var scale = (fov / (fov + z3d));
+      let scale = (fov / (fov + z3d));
+      let x2d = (x3d * scale) + HALF_WIDTH;
+      let y2d = (y3d * scale) + HALF_HEIGHT;
 
-    // Store the X value with the scaling
-    // FOV is taken into account
-    // (just pushing it over to the left a bit too)
-    var x2d = (x3d * scale) + HALF_WIDTH;
-
-    // Store the Y value with the scaling
-    // FOV is taken into account
-
-    var y2d = (y3d * scale) + HALF_HEIGHT;
-
-    // Draw the point
-
-    // Set the size based on scaling
-    context.lineWidth = scale;
-
-    context.strokeStyle = "rgb(255,255,255)";
-    context.beginPath();
-    context.moveTo(x2d, y2d);
-    context.lineTo(x2d + scale, y2d);
-    context.stroke();
+      context.lineWidth = 1;
+      context.strokeStyle = "rgb(255,255,255)";
+      context.beginPath();
+      context.moveTo(x2d, y2d);
+      context.lineTo(x2d + scale, y2d);
+      context.stroke();
+    }
+    requestAnimationFrame(draw);
   }
   requestAnimationFrame(draw);
-}
 
-requestAnimationFrame(draw);
+  function rotateX(point3d, angleX) {
+    let x = point3d[0];
+    let z = point3d[2];
+    let cosRY = Math.cos(angleX);
+    let sinRY = Math.sin(angleX);
+    let tempz = z;
+    let tempx = x;
 
-function rotateX(point3d, angleX) {
-  var x = point3d[0];
-  var z = point3d[2];
+    x = (tempx * cosRY) + (tempz * sinRY);
+    z = (tempx * -sinRY) + (tempz * cosRY);
 
-  var cosRY = Math.cos(angleX);
-  var sinRY = Math.sin(angleX);
+    point3d[0] = x;
+    point3d[2] = z;
+  }
 
-  var tempz = z;
-  var tempx = x;
+  function rotateY(point3d, angleY) {
+    let y = point3d[1];
+    let z = point3d[2];
+    let cosRX = Math.cos(angleY);
+    let sinRX = Math.sin(angleY);
+    let tempz = z;
+    let tempy = y;
 
-  x = (tempx * cosRY) + (tempz * sinRY);
-  z = (tempx * -sinRY) + (tempz * cosRY);
+    y = (tempy * cosRX) + (tempz * sinRX);
+    z = (tempy * -sinRX) + (tempz * cosRX);
 
-  point3d[0] = x;
-  point3d[2] = z;
-
-}
-
-function rotateY(point3d, angleY) {
-  var y = point3d[1];
-  var z = point3d[2];
-
-  var cosRX = Math.cos(angleY);
-  var sinRX = Math.sin(angleY);
-
-  var tempz = z;
-  var tempy = y;
-
-  y = (tempy * cosRX) + (tempz * sinRX);
-  z = (tempy * -sinRX) + (tempz * cosRX);
-
-  point3d[1] = y;
-  point3d[2] = z;
-
-}
-
-//here's our function 'getMouse'.
-function getMouse(mousePosition) {
-  //for other browsers..
-  if (mousePosition.layerX || mousePosition.layerX === 0) { // Firefox?
-    mouseX = mousePosition.layerX;
-    mouseY = mousePosition.layerY;
-  } else if (mousePosition.offsetX || mousePosition.offsetX === 0) { // Opera?
-    mouseX = mousePosition.offsetX;
-    mouseY = mousePosition.offsetY;
+    point3d[1] = y;
+    point3d[2] = z;
   }
 }
+
+playButton.addEventListener("click", playAudio)
