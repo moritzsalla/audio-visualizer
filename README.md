@@ -1,6 +1,6 @@
 # Dancing Death Star
 
-This draws a death star on a 2D canvas and uses maximilian to dynamically manipulate its shape
+Visualizes audio waves by generating primitive trigonometry on HTML canvas. Uses maximilian for sound generation.
 
 ![Image](images/screenshot-1.png)
 
