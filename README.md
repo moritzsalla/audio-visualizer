@@ -1,4 +1,4 @@
-# Dancing Death Star
+# Simple Audio Visualizer
 
 Visualizes audio waves by generating primitive trigonometry on HTML canvas. Uses maximilian for sound generation.
 
